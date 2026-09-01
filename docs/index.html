@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="X转PDF">
+  <title>X 推文转 PDF</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" integrity="sha512-Yacou8L0j8YbyX4R0kC2t1b9fZ7kTz3d0zYc0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0Y0=" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #0f1419;
+      --card: #1a2332;
+      --text: #e7ecf1;
+      --muted: #8b98a5;
+      --accent: #1d9bf0;
+      --danger: #f4212e;
+      --ok: #00ba7c;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f4f7fa;
+        --card: #fff;
+        --text: #0f1419;
+        --muted: #536471;
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    }
+    .wrap { max-width: 520px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; margin: 0 0 8px; }
+    .sub { color: var(--muted); font-size: 0.92rem; line-height: 1.5; margin-bottom: 20px; }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.18);
+    }
+    label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; }
+    input[type="url"], input[type="text"] {
+      width: 100%;
+      border: 1px solid rgba(127,127,127,.25);
+      border-radius: 12px;
+      padding: 14px 12px;
+      font-size: 16px;
+      background: transparent;
+      color: var(--text);
+    }
+    .row { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+    button {
+      flex: 1;
+      min-width: 120px;
+      border: 0;
+      border-radius: 999px;
+      padding: 14px 16px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .primary { background: var(--accent); color: #fff; }
+    .secondary { background: rgba(127,127,127,.15); color: var(--text); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .status {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      min-height: 1.4em;
+    }
+    .status.err { color: var(--danger); }
+    .status.ok { color: var(--ok); }
+    .tips {
+      margin-top: 20px;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .tips strong { color: var(--text); }
+    #preview {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 620px;
+      background: #fff;
+      color: #111;
+      padding: 32px;
+      font-family: -apple-system, sans-serif;
+    }
+    #preview .name { font-size: 20px; font-weight: 700; }
+    #preview .handle { color: #666; font-size: 14px; margin-top: 4px; }
+    #preview .content {
+      font-size: 16px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      margin: 20px 0;
+    }
+    #preview img {
+      max-width: 100%;
+      display: block;
+      margin: 16px 0;
+      border-radius: 8px;
+    }
+    #preview .footer {
+      color: #999;
+      font-size: 12px;
+      margin-top: 24px;
+      border-top: 1px solid #eee;
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>X 推文转 PDF</h1>
+    <p class="sub">无需导入快捷指令。复制 X 分享链接，在此生成 PDF 并分享。<br>仅图文，不含视频。</p>
+
+    <div class="card">
+      <label for="url">X 推文链接</label>
+      <input id="url" type="url" inputmode="url" autocomplete="off" placeholder="https://x.com/用户/status/1234567890">
+
+      <div class="row">
+        <button type="button" class="secondary" id="pasteBtn">粘贴链接</button>
+        <button type="button" class="primary" id="goBtn">生成 PDF</button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="tips">
+      <strong>使用方法</strong><br>
+      1. 在 X App 点分享 → 复制链接<br>
+      2. 回到此页点「粘贴链接」→「生成 PDF」<br>
+      3. PDF 会自动下载/分享（Safari 可存到文件或 AirDrop）<br><br>
+      <strong>说明</strong>：iPhone 不支持导入未签名的快捷指令文件，因此提供此网页版替代。
+    </div>
+  </div>
+
+  <div id="preview"></div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $("status");
+    const urlInput = $("url");
+    const goBtn = $("goBtn");
+    const pasteBtn = $("pasteBtn");
+    const preview = $("preview");
+
+    function setStatus(msg, type = "") {
+      statusEl.textContent = msg;
+      statusEl.className = "status" + (type ? " " + type : "");
+    }
+
+    function parseTweetId(link) {
+      const m = String(link).match(/status\/(\d+)/);
+      return m ? m[1] : null;
+    }
+
+    async function fetchTweet(id) {
+      const res = await fetch(`https://api.vxtwitter.com/status/${id}`);
+      if (!res.ok) throw new Error("推文获取失败");
+      const data = await res.json();
+      if (!data || !data.text) throw new Error("推文不存在或无法读取");
+      return data;
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    async function blobUrlForImage(url) {
+      const res = await fetch(url, { mode: "cors" });
+      if (!res.ok) throw new Error("图片下载失败");
+      const blob = await res.blob();
+      return URL.createObjectURL(blob);
+    }
+
+    async function renderPreview(tweet) {
+      const photos = (tweet.media_extended || []).filter((m) => m.type === "image");
+      let imgs = "";
+      for (const p of photos) {
+        try {
+          const src = await blobUrlForImage(p.url);
+          imgs += `<img src="${src}" alt="${escapeHtml(p.altText || "")}">`;
+        } catch {
+          imgs += `<p style="color:#999">[图片加载失败]</p>`;
+        }
+      }
+
+      preview.innerHTML = `
+        <div class="name">${escapeHtml(tweet.user_name || "")}</div>
+        <div class="handle">@${escapeHtml(tweet.user_screen_name || "")}</div>
+        <div class="content">${escapeHtml(tweet.text || "")}</div>
+        ${imgs}
+        <div class="footer">来源：${escapeHtml(tweet.tweetURL || "")}<br>发布时间：${escapeHtml(tweet.date || "")}</div>
+      `;
+    }
+
+    async function makePdf(tweet) {
+      const filename = `X_${tweet.user_screen_name || "tweet"}_${tweet.tweetID || "post"}.pdf`;
+      await html2pdf().set({
+        margin: [12, 12, 12, 12],
+        filename,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak: { mode: ["css", "legacy"] }
+      }).from(preview).save();
+    }
+
+    pasteBtn.addEventListener("click", async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (text) {
+          urlInput.value = text.trim();
+          setStatus("已粘贴链接", "ok");
+        } else {
+          setStatus("剪贴板为空", "err");
+        }
+      } catch {
+        setStatus("无法读取剪贴板，请长按输入框手动粘贴", "err");
+      }
+    });
+
+    goBtn.addEventListener("click", async () => {
+      const link = urlInput.value.trim();
+      const id = parseTweetId(link);
+      if (!id) {
+        setStatus("链接无效，请粘贴含 /status/数字 的 X 链接", "err");
+        return;
+      }
+
+      goBtn.disabled = true;
+      pasteBtn.disabled = true;
+      setStatus("正在获取推文…");
+
+      try {
+        const tweet = await fetchTweet(id);
+        setStatus("正在生成 PDF…");
+        await renderPreview(tweet);
+        await makePdf(tweet);
+        setStatus("PDF 已生成！", "ok");
+      } catch (e) {
+        setStatus(e.message || "生成失败，请稍后重试", "err");
+      } finally {
+        goBtn.disabled = false;
+        pasteBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

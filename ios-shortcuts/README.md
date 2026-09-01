@@ -1,6 +1,31 @@
 # X 推文转 PDF
 
-将 X（Twitter）图文推文分享链接一键转为可分享的 PDF 文件。**仅处理文字和图片，不处理视频。**
+将 X（Twitter）图文推文分享链接转为可分享的 PDF 文件。**仅处理文字和图片，不含视频。**
+
+## 推荐：Safari 网页版（无需导入快捷指令）
+
+iPhone **不支持导入未签名的 `.shortcut` 文件**（会提示「不支持导入未签名的快捷指令文件」）。
+
+请改用网页版：
+
+**https://nfwater.github.io/Le-Solo-AI-Dev/**
+
+1. iPhone Safari 打开上面链接（可添加到主屏幕）
+2. 在 X App **复制链接**
+3. 网页点 **粘贴链接** → **生成 PDF**
+4. 保存或分享 PDF
+
+---
+
+## 快捷指令版（需 Mac 签名后才能导入）
+
+以下 `.shortcut` 文件在未签名时，**无法在 iPhone 上直接导入**。
+
+若有 Mac，可在终端签名后再传到 iPhone：
+
+```bash
+shortcuts sign --mode anyone --input X-Tweet-To-PDF.shortcut --output signed.shortcut
+```
 
 ## 安装（iPhone / iPad）
 
