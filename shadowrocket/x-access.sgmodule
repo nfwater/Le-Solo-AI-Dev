@@ -1,0 +1,34 @@
+#!name=X 访问优化
+#!desc=将 X（Twitter）及本项目推文转 PDF 所需 API 域名走代理，提升 App / 网页 / 快捷指令访问稳定性。请将 PROXY 改为你配置里的代理策略组名称。
+#!author=Le-Solo-AI-Dev
+#!homepage=https://github.com/nfwater/Le-Solo-AI-Dev
+
+[Rule]
+# ===== X / Twitter 核心 =====
+DOMAIN-SUFFIX,x.com,PROXY
+DOMAIN-SUFFIX,twitter.com,PROXY
+DOMAIN-SUFFIX,t.co,PROXY
+DOMAIN-KEYWORD,twitter,PROXY
+
+# ===== 图片 / 视频 CDN =====
+DOMAIN-SUFFIX,twimg.com,PROXY
+DOMAIN-SUFFIX,twimg.org,PROXY
+
+# ===== 旧域名与关联服务 =====
+DOMAIN-SUFFIX,twitter.jp,PROXY
+DOMAIN-SUFFIX,twitterinc.com,PROXY
+DOMAIN-SUFFIX,periscope.tv,PROXY
+DOMAIN-SUFFIX,pscp.tv,PROXY
+DOMAIN-SUFFIX,vine.co,PROXY
+
+# ===== 广告 / 统计（App 内可能触发） =====
+DOMAIN-SUFFIX,ads-twitter.com,PROXY
+DOMAIN-SUFFIX,analytics.twitter.com,PROXY
+
+# ===== 本项目「推文转 PDF」用到的公开 API =====
+DOMAIN-SUFFIX,fxtwitter.com,PROXY
+DOMAIN-SUFFIX,vxtwitter.com,PROXY
+DOMAIN-SUFFIX,fxembed.com,PROXY
+
+# ===== GitHub Pages 网页版（可选，国内通常可直连；若打不开可保留） =====
+DOMAIN,nfwater.github.io,PROXY
