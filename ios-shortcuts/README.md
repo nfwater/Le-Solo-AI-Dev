@@ -4,11 +4,20 @@
 
 ## 安装（iPhone / iPad）
 
-1. 在 iPhone 上打开本目录中的 **`X推文转PDF.shortcut`** 文件  
-   - 可从 GitHub 下载后存到「文件」App  
-   - 或通过 AirDrop / iCloud 传到手机  
-2. 轻点文件，系统会打开「快捷指令」并提示 **添加**  
-3. 点 **添加快捷指令** 即可
+> 详细图文步骤见 **[下载说明.md](./下载说明.md)**
+
+### 最快方式（Safari 直接下载）
+
+1. iPhone **Safari** 打开：  
+   **https://raw.githubusercontent.com/nfwater/Le-Solo-AI-Dev/main/ios-shortcuts/X-Tweet-To-PDF.shortcut**
+2. 允许下载 → 在 Safari 下载列表里**点开该文件**
+3. 跳转到「快捷指令」→ 点 **添加快捷指令**
+
+### 从 GitHub 网页下载
+
+1. 打开：**https://github.com/nfwater/Le-Solo-AI-Dev/tree/main/ios-shortcuts**
+2. 点 **`X-Tweet-To-PDF.shortcut`**
+3. 右上角 **⋯** → **Download** → 下载后点开文件 → **添加快捷指令**
 
 > **说明：** Apple 对快捷指令文件有签名限制。若提示「无法导入」或「未签名」，请见下方 [无法导入？](#无法导入)。
 
