@@ -1,0 +1,72 @@
+# X 推文转 PDF（仅图文，不含视频）
+# 用法：复制 X 分享链接后运行；或从 X 分享菜单传入链接
+
+GetVariable s:ShortcutInput -> v:Link
+GetVariable v:Link
+If input="Equals" value=""
+    GetClipboard -> v:Link
+End
+
+GetVariable v:Link
+MatchText pattern="/status/(\\d+)" caseSensitive=false
+GetGroupFromMatchedText get="Group At Index" groupIndex=1 -> v:TweetID
+
+GetVariable v:TweetID
+If input="Equals" value=""
+    ShowAlert title="链接无效" message="请复制 X 推文分享链接（需包含 /status/数字）"
+Otherwise
+    Text "https://api.fxtwitter.com/2/status/\(v:TweetID)"
+    URL
+    GetContentsofURL
+    GetDictionaryFromInput -> v:APIResult
+
+    GetVariable v:APIResult
+    GetDictionaryValue get="Value" key="code" -> v:StatusCode
+    Text "200" -> v:OKCode
+    GetVariable v:StatusCode
+    If input="Equals" ^(GetVariable v:OKCode)
+        GetVariable v:APIResult
+        GetDictionaryValue get="Value" key="status" -> v:Tweet
+        GetVariable v:Tweet
+        If input="Equals" value=""
+            GetVariable v:APIResult
+            GetDictionaryValue get="Value" key="tweet" -> v:Tweet
+        End
+
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="text" -> v:Body
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="author.name" -> v:AuthorName
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="author.screen_name" -> v:AuthorHandle
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="url" -> v:SourceURL
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="created_at" -> v:PostDate
+        GetVariable v:Tweet
+        GetDictionaryValue get="Value" key="media.photos" -> v:Photos
+
+        Text "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><style>body{font-family:-apple-system,sans-serif;padding:32px;max-width:620px;margin:0 auto;color:#111}.header{border-bottom:1px solid #eee;padding-bottom:16px;margin-bottom:20px}.name{font-size:20px;font-weight:700}.handle{color:#666;font-size:14px;margin-top:4px}.content{font-size:16px;line-height:1.6;white-space:pre-wrap;margin:20px 0}img{max-width:100%;display:block;margin:16px 0;border-radius:8px}.footer{color:#999;font-size:12px;margin-top:32px;border-top:1px solid #eee;padding-top:12px}</style></head><body><div class=\"header\"><div class=\"name\">\(v:AuthorName)</div><div class=\"handle\">@\(v:AuthorHandle)</div></div><div class=\"content\">\(v:Body)</div>" -> v:HTML
+
+        GetVariable v:Photos
+        RepeatWithEach -> mv:Photo
+            GetVariable mv:Photo
+            GetDictionaryValue get="Value" key="url" -> mv:PhotoURL
+            URL mv:PhotoURL
+            GetContentsofURL
+            Base64Encode mode="Encode" lineBreaks="None" -> mv:PhotoB64
+            Text "<img src=\"data:image/jpeg;base64,\(mv:PhotoB64)\">"
+            AddToVariable v:HTML
+        End RepeatWithEach
+
+        Text "<div class=\"footer\">来源：\(v:SourceURL)<br>发布时间：\(v:PostDate)</div></body></html>"
+        AddToVariable v:HTML
+
+        GetVariable v:HTML
+        MakeRichTextFromHTML
+        MakePDF includeMargin=true
+        Share
+    Otherwise
+        ShowAlert title="获取失败" message="推文不存在、已删除或为私密帖，请稍后重试"
+    End
+End
